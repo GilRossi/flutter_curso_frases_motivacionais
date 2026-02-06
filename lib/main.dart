@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
-void main(){
-  runApp(MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: Home()
-    ),
-  );
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: const Home(),
+    );
+  }
 }
 
 class Home extends StatefulWidget {
@@ -17,8 +25,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-
-  var _frases = [
+  final List<String> _frases = [
     "Acredite em você, o primeiro passo já te coloca à frente.",
     "Pequenos progressos diários constroem grandes conquistas.",
     "Desistir não acelera o caminho, insistir sim.",
@@ -30,59 +37,58 @@ class _HomeState extends State<Home> {
     "Faça o seu melhor agora, o futuro agradece."
   ];
 
-  var _fraseGerada = "Clique abaixo para gerar uma nova frase!";
-  
-  void _gerarFrase(){
-    var numSorteado = Random().nextInt(_frases.length);
+  String _fraseGerada = "Clique abaixo para gerar uma nova frase!";
 
+  void _gerarFrase() {
+    final random = Random();
     setState(() {
-      _fraseGerada = _frases[numSorteado];
+      _fraseGerada = _frases[random.nextInt(_frases.length)];
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final alturaTela = MediaQuery.of(context).size.height;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            "Frases Motivacionais",
-          style: TextStyle(
-          ),
-        ),
+        title: const Text("Frases Motivacionais"),
         backgroundColor: Colors.lightBlueAccent[100],
       ),
-      body: Container(
-        padding: EdgeInsets.all(20),
-        decoration: BoxDecoration(
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Image.asset(
-                "images/c10.png",
-              fit: BoxFit.fitWidth,
-            ),
-            Text(
-              _fraseGerada,
-              textAlign: TextAlign.justify,
-              style: TextStyle(
-                fontSize: 23,
-                fontStyle: FontStyle.italic,
-                color: Colors.black,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              SizedBox(
+                height: alturaTela * 0.3,
+                child: Image.asset(
+                  "images/c10.png",
+                  fit: BoxFit.contain,
+                ),
               ),
-            ),
-            ElevatedButton(
-              child: Text(
+              const SizedBox(height: 30),
+              Text(
+                _fraseGerada,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: _gerarFrase,
+                child: const Text(
                   "Nova Frase",
-                style: TextStyle(
-                  fontSize: 25,
-                  color: Colors.lightBlueAccent,
-                  fontWeight: FontWeight.bold,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              onPressed: _gerarFrase
-                ),
-          ],
+            ],
+          ),
         ),
       ),
     );
