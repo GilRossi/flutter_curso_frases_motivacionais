@@ -1,76 +1,89 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-Future<String> gerarFraseIA() async {
-  final startTime = DateTime.now();
-  print('🔥 [OPENAI] Iniciando chamada à API - ${startTime.toIso8601String()}');
+class OpenAIService {
+  static const String _baseUrl = "https://api.openai.com/v1/chat/completions";
+  static const String _model = "gpt-4o-mini"; // corrigido (gpt-4.0-mini não existe)
 
-  try {
-    print('   → Enviando requisição POST para: https://api.openai.com/v1/chat/completions');
-    print('   → Model: gpt-5-mini | Temp: 0.8 | Max tokens: 60');
-    print('   → Prompt enviado: "Gere uma frase motivacional curta e positiva"');
+  static Future<String> gerarFrase() async {
+    final startTime = DateTime.now();
+    print('🔥 [OpenAI] Iniciando geração de frase - ${startTime.toIso8601String()}');
 
-    final response = await http.post(
-      Uri.parse("https://api.openai.com/v1/chat/completions"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-      },
-      body: jsonEncode({
-        "model": "gpt-5-mini",
-        "messages": [
-          {
-            "role": "user",
-            "content": "Gere uma frase motivacional curta e positiva"
-          }
-        ],
-        "temperature": 0.8,
-        "max_tokens": 60,
-      }),
-    );
+    try {
+      print('   → POST $_baseUrl');
+      print('   → Modelo: $_model');
+      print('   → Temperatura: 0.8 | Max tokens: 60');
+      print('   → Prompt: "Gere uma frase motivacional curta e positiva"');
 
-    final duration = DateTime.now().difference(startTime);
-    print('   ← Resposta recebida em ${duration.inMilliseconds} ms (${duration.inSeconds}.${duration.inMilliseconds % 1000}s)');
+      final response = await http
+          .post(
+        Uri.parse(_baseUrl),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer SUA_API_KEY_AQUI",
+        },
+        body: jsonEncode({
+          "model": _model,
+          "messages": [
+            {
+              "role": "user",
+              "content": "Gere uma frase motivacional curta e positiva"
+            }
+          ],
+          "temperature": 0.8,
+          "max_tokens": 60,
+        }),
+      )
+          .timeout(const Duration(seconds: 20)); // adicionado timeout para evitar travamento
 
-    print('   → Status code: ${response.statusCode}');
+      final duration = DateTime.now().difference(startTime);
+      print('   ← Resposta recebida em ${duration.inMilliseconds} ms (${duration.inSeconds}.${(duration.inMilliseconds % 1000).toString().padLeft(3, '0')}s)');
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      print('   → Status: ${response.statusCode}');
 
-      final content = data["choices"]?[0]?["message"]?["content"] as String?;
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-      if (content != null && content.isNotEmpty) {
-        print('✅ [OPENAI] Sucesso!');
-        print('   Frase gerada: "$content"');
-        print('   Uso de tokens → completion: ${data["usage"]?["completion_tokens"]} | prompt: ${data["usage"]?["prompt_tokens"]} | total: ${data["usage"]?["total_tokens"]}');
+        final content = data["choices"]?[0]?["message"]?["content"] as String?;
+        if (content == null || content.trim().isEmpty) {
+          print('⚠️ Resposta 200, mas conteúdo vazio ou inválido');
+          print('   Body completo: ${response.body}');
+          throw Exception("Resposta da API sem conteúdo válido");
+        }
+
+        print('✅ Sucesso!');
+        print('   Frase: "$content"');
+        print('   Tokens usados → prompt: ${data["usage"]?["prompt_tokens"] ?? "?"} | '
+            'completion: ${data["usage"]?["completion_tokens"] ?? "?"} | '
+            'total: ${data["usage"]?["total_tokens"] ?? "?"}');
 
         return content.trim();
       } else {
-        print('⚠️ [OPENAI] Resposta 200, mas conteúdo da frase não encontrado');
-        print('   Body completo: ${response.body}');
-        throw Exception('Resposta da API sem conteúdo válido');
-      }
-    } else {
-      print('❌ [OPENAI] Erro na requisição');
-      print('   Status: ${response.statusCode}');
-      print('   Body: ${response.body}');
+        print('❌ Erro na API');
+        print('   Status: ${response.statusCode}');
+        print('   Body: ${response.body}');
 
-      if (response.statusCode == 401) {
-        print('   → Provável causa: Chave API inválida ou expirada');
-      } else if (response.statusCode == 429) {
-        print('   → Provável causa: Limite de taxa (rate limit) atingido');
-      } else if (response.statusCode == 400) {
-        print('   → Provável causa: Parâmetros inválidos (modelo errado, json mal formado, etc.)');
-      }
+        // Mensagens de erro mais amigáveis
+        if (response.statusCode == 401) {
+          print('   → Causa provável: Chave API inválida, expirada ou mal formatada');
+        } else if (response.statusCode == 429) {
+          print('   → Causa provável: Limite de requisições (rate limit) atingido');
+        } else if (response.statusCode == 400) {
+          print('   → Causa provável: Parâmetros inválidos (modelo errado, JSON malformado, etc.)');
+        } else if (response.statusCode == 404) {
+          print('   → Causa provável: Modelo não encontrado');
+        }
 
-      throw Exception('Erro ${response.statusCode}: ${response.body}');
+        throw Exception("Erro OpenAI ${response.statusCode}: ${response.body}");
+      }
+    } catch (e, stackTrace) {
+      final duration = DateTime.now().difference(startTime);
+      print('❌ Exceção durante chamada à OpenAI');
+      print('   Tempo até erro: ${duration.inMilliseconds} ms');
+      print('   Erro: $e');
+      print('   StackTrace: $stackTrace');
+
+      rethrow; // permite que o chamador também capture o erro
     }
-  } catch (e, stackTrace) {
-    final duration = DateTime.now().difference(startTime);
-    print('❌ [OPENAI] Exceção durante a chamada');
-    print('   Tempo até o erro: ${duration.inMilliseconds} ms');
-    print('   Erro: $e');
-    print('   StackTrace: $stackTrace');
-    rethrow;
   }
 }

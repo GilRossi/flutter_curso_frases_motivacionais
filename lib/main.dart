@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'fraseIA.dart';
+
+import 'frases_fallback.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -27,66 +31,35 @@ class _HomeState extends State<Home> {
   String _fraseGerada = "Clique abaixo para gerar uma nova frase!";
   bool _carregando = false;
 
-  Future<String> gerarFraseIA() async {
-    final startTime = DateTime.now();
-    print('🔥 [IA] Iniciando chamada para gerar frase - ${startTime.toIso8601String()}');
-
-    try {
-      // Simulação de chamada à IA (substitua aqui pela chamada real depois)
-      await Future.delayed(const Duration(seconds: 2));
-
-      const fraseSimulada = "A persistência transforma pequenos passos em grandes conquistas.";
-
-      final endTime = DateTime.now();
-      final duration = endTime.difference(startTime);
-
-      print('✅ [IA] Resposta recebida com sucesso');
-      print('   Tempo gasto: ${duration.inMilliseconds} ms (${duration.inSeconds}.${duration.inMilliseconds % 1000}s)');
-      print('   Frase gerada: "$fraseSimulada"');
-
-      return fraseSimulada;
-    } catch (e, stackTrace) {
-      final endTime = DateTime.now();
-      final duration = endTime.difference(startTime);
-
-      print('❌ [IA] Erro ao gerar frase');
-      print('   Tempo até o erro: ${duration.inMilliseconds} ms');
-      print('   Erro: $e');
-      print('   StackTrace: $stackTrace');
-
-      rethrow; // relança para o catch externo tratar
-    }
-  }
-
+  /// Método único responsável por gerar a frase
   Future<void> _gerarFrase() async {
-    print('👆 Botão "Nova Frase" pressionado');
+    if (_carregando) return;
+
+    debugPrint('👆 Botão "Nova Frase" pressionado');
 
     setState(() {
       _carregando = true;
-      _fraseGerada = "Pensando em algo inspirador...";
     });
 
-    print('⏳ Iniciando processo de geração de frase');
-
     try {
-      final frase = await gerarFraseIA();
+      final frase = await OpenAIService.gerarFrase();
 
-      print('🎉 Frase atualizada na tela com sucesso');
+      debugPrint('✅ Frase recebida com sucesso');
 
       setState(() {
         _fraseGerada = frase;
       });
     } catch (e) {
-      print('⚠️ Falha ao atualizar frase na interface');
+      debugPrint('❌ Erro ao gerar frase: $e');
 
       setState(() {
-        _fraseGerada = "Erro ao gerar frase. Tente novamente.\n($e)";
+        _fraseGerada = FrasesFallback.fraseAleatoria();
       });
-    } finally {
+    }
+    finally {
       setState(() {
         _carregando = false;
       });
-      print('🏁 Processo de geração finalizado\n');
     }
   }
 
@@ -103,8 +76,8 @@ class _HomeState extends State<Home> {
             return Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  /// Imagem
                   Expanded(
                     flex: orientation == Orientation.portrait ? 4 : 2,
                     child: Image.asset(
@@ -112,28 +85,42 @@ class _HomeState extends State<Home> {
                       fit: BoxFit.contain,
                     ),
                   ),
+
+                  /// Frase com animação
                   Expanded(
                     flex: 3,
                     child: Center(
-                      child: Text(
-                        _fraseGerada,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontStyle: FontStyle.italic,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 400),
+                        transitionBuilder: (child, animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          );
+                        },
+                        child: Text(
+                          _fraseGerada,
+                          key: ValueKey(_fraseGerada),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                  Expanded(
-                    flex: 1,
+
+                  /// Botão
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
                     child: ElevatedButton(
                       onPressed: _carregando ? null : _gerarFrase,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 56),
-                      ),
                       child: _carregando
-                          ? const CircularProgressIndicator(color: Colors.white)
+                          ? const CircularProgressIndicator(
+                        color: Colors.white,
+                      )
                           : const Text(
                         "Nova Frase",
                         style: TextStyle(fontSize: 20),
