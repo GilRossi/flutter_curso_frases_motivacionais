@@ -24,13 +24,13 @@ class OpenAIService {
         },
         body: jsonEncode({
           "model": _model,
-          "input": "Gere uma frase motivacional curta e positiva",
+          "input": "Gere uma frase motivacional positiva",
           "temperature": 0.8,
           "max_output_tokens": 60,
         }),
 
       )
-          .timeout(const Duration(seconds: 20)); // adicionado timeout para evitar travamento
+          .timeout(const Duration(seconds: 20));
 
       final duration = DateTime.now().difference(startTime);
       print('   ← Resposta recebida em ${duration.inMilliseconds} ms (${duration.inSeconds}.${(duration.inMilliseconds % 1000).toString().padLeft(3, '0')}s)');
