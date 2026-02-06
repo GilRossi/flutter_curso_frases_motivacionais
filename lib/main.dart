@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
 
 void main() {
   runApp(const MyApp());
@@ -25,25 +24,34 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final List<String> _frases = [
-    "Acredite em você, o primeiro passo já te coloca à frente.",
-    "Pequenos progressos diários constroem grandes conquistas.",
-    "Desistir não acelera o caminho, insistir sim.",
-    "O esforço de hoje é o orgulho de amanhã.",
-    "Nem todo dia é fácil, mas todo dia vale a pena tentar.",
-    "Disciplina vence a motivação quando a vontade falha.",
-    "Você é mais capaz do que imagina.",
-    "O sucesso nasce da constância, não da pressa.",
-    "Faça o seu melhor agora, o futuro agradece."
-  ];
-
   String _fraseGerada = "Clique abaixo para gerar uma nova frase!";
+  bool _carregando = false;
 
-  void _gerarFrase() {
-    final random = Random();
+  Future<String> gerarFraseIA() async {
+    await Future.delayed(const Duration(seconds: 2)); // simulação
+    return "A persistência transforma pequenos passos em grandes conquistas.";
+  }
+
+  Future<void> _gerarFrase() async {
     setState(() {
-      _fraseGerada = _frases[random.nextInt(_frases.length)];
+      _carregando = true;
+      _fraseGerada = "Pensando em algo inspirador...";
     });
+
+    try {
+      final frase = await gerarFraseIA();
+      setState(() {
+        _fraseGerada = frase;
+      });
+    } catch (e) {
+      setState(() {
+        _fraseGerada = "Erro ao gerar frase. Tente novamente.";
+      });
+    } finally {
+      setState(() {
+        _carregando = false;
+      });
+    }
   }
 
   @override
@@ -82,13 +90,14 @@ class _HomeState extends State<Home> {
                 Expanded(
                   flex: 1,
                   child: ElevatedButton(
-                    onPressed: _gerarFrase,
-                    child: const Text(
+                    onPressed: _carregando ? null : _gerarFrase,
+                    child: _carregando
+                        ? const CircularProgressIndicator(
+                      color: Colors.white,
+                    )
+                        : const Text(
                       "Nova Frase",
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: TextStyle(fontSize: 20),
                     ),
                   ),
                 ),
