@@ -10,9 +10,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const Home(),
+      home: Home(),
     );
   }
 }
@@ -48,48 +48,54 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    final alturaTela = MediaQuery.of(context).size.height;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Frases Motivacionais"),
-        backgroundColor: Colors.lightBlueAccent[100],
+        backgroundColor: Colors.lightBlueAccent,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              SizedBox(
-                height: alturaTela * 0.3,
-                child: Image.asset(
-                  "images/c10.png",
-                  fit: BoxFit.contain,
-                ),
-              ),
-              const SizedBox(height: 30),
-              Text(
-                _fraseGerada,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: _gerarFrase,
-                child: const Text(
-                  "Nova Frase",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+      body: OrientationBuilder(
+        builder: (context, orientation) {
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Expanded(
+                  flex: orientation == Orientation.portrait ? 4 : 2,
+                  child: Image.asset(
+                    "images/c10.png",
+                    fit: BoxFit.contain,
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
+                Expanded(
+                  flex: 3,
+                  child: Center(
+                    child: Text(
+                      _fraseGerada,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: ElevatedButton(
+                    onPressed: _gerarFrase,
+                    child: const Text(
+                      "Nova Frase",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
