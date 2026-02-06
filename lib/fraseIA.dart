@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class OpenAIService {
-  static const String _baseUrl = "https://api.openai.com/v1/chat/completions";
-  static const String _model = "gpt-4o-mini"; // corrigido (gpt-4.0-mini não existe)
+  static const String _baseUrl = "https://api.openai.com/v1/responses";
+  static const String _model = "gpt-4o-mini";
 
   static Future<String> gerarFrase() async {
     final startTime = DateTime.now();
@@ -20,19 +20,15 @@ class OpenAIService {
         Uri.parse(_baseUrl),
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer SUA_API_KEY_AQUI",
+          "Authorization": "Bearer ",
         },
         body: jsonEncode({
           "model": _model,
-          "messages": [
-            {
-              "role": "user",
-              "content": "Gere uma frase motivacional curta e positiva"
-            }
-          ],
+          "input": "Gere uma frase motivacional curta e positiva",
           "temperature": 0.8,
-          "max_tokens": 60,
+          "max_output_tokens": 60,
         }),
+
       )
           .timeout(const Duration(seconds: 20)); // adicionado timeout para evitar travamento
 
